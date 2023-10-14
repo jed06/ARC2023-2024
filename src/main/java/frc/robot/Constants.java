@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -61,7 +62,47 @@ public final class Constants {
 
 // Buttons can be assigned to functions here  
   }
+  public static final class ShooterPorts {
+    public static final int LeftFlywheelPort = 16;
+    public static final int RightFlywheelPort = 17;
+    public static final int pivotPort = 14;
+    public static final int rollerPort = 15;
+  }
 
+  public static final class USBOrder {
+    public static final int Zero = 0;
+    public static final int One = 1;
+  }
+
+  public static final class leftFlywheelPIDConsts {
+    public static double pidP = 0.0;
+    public static double pidI = 0.0;
+    public static double pidD = 0.0;
+    }
+    
+    public static final class rightFlywheelPIDConsts {
+    public static double pidP = 0.0;
+    public static double pidI = 0.0;
+    public static double pidD = 0.0;
+    }
+    
+    public static final class leftFlywheelFF {
+      public static final double kS = 0.0;
+      public static final double kV = 0.0;
+      public static final double kA = 0.0;
+      }
+      
+      public static final class rightFlywheelFF {
+      public static final double kS = 0.0;
+      public static final double kV = 0.0;
+      public static final double kA = 0.0;
+      }
+
+      public static final class FlywheelSimConstants{
+        public static final double kV = 0.37;
+        public static final double kA = 0.6;
+
+      } 
 
   public static final int leftPort = 1;
   public static final int rightPort = 2;

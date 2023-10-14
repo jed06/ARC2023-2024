@@ -6,14 +6,14 @@ package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
+import frc.robot.subsystems.*;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.ExampleSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.commands.TankDrive;
-import frc.robot.subsystems.DriveTrain;
-import frc.robot.commands.DistanceAuto;
+import frc.robot.commands.*;
+import frc.robot.subsystems.*;
 // dont forget to import any new commands or subsystems you make here
 import edu.wpi.first.wpilibj.Joystick;
 
@@ -31,10 +31,11 @@ public class RobotContainer {
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final TankDrive TankDrive;
   private static DriveTrain dt = new DriveTrain();
-  public static final Joystick joystick0 = new Joystick(0);
-  public static final Joystick joystick1 = new Joystick(1);
+  public static Joystick joystick0 = new Joystick(0);
+  public static Joystick joystick1 = new Joystick(1);
   private final DistanceAuto DistanceAuto;
-
+  private final Shooter shooter = new Shooter();
+  private final FlywheelJoystick flywheelJoystick;
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     // Configure the trigger bindings
@@ -42,7 +43,18 @@ public class RobotContainer {
     DistanceAuto = new DistanceAuto(dt, 1); // having robot travel 1 meter
     configureBindings();
     dt.setDefaultCommand(DistanceAuto);
+
+    joystick1 = new Joystick(0);
+    flywheelJoystick = new FlywheelJoystick(shooter, joystick0);
+
+    shooter.setDefaultCommand(flywheelJoystick);
+
   }
+
+  public static Joystick getJoy1() {
+    return joystick1;
+    }
+    
 
   /**
    * Use this method to define your trigger->command mappings. Triggers can be created via the

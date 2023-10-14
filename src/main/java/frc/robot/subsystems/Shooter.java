@@ -8,12 +8,21 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.networktables.GenericEntry;
 
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.TalonSRXSimCollection;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 public class Shooter extends SubsystemBase {
   /** Creates a new Shooter. */
@@ -22,6 +31,11 @@ public class Shooter extends SubsystemBase {
   private boolean override = false; // Helps us switch from manual to auto
   private Timer overrideTimer = new Timer(); // We want a toggle button of some sorts
   private double overrideTime = 1.0;
+
+  private ShuffleboardTab flyTab = Shuffleboard.getTab("Flywheel");
+  GenericEntry nativeVel = flyTab.add("TickVelocity", 0.0).getEntry();
+  GenericEntry nativePos = flyTab.add("TickPos", 0.0).getEntry();
+  GenericEntry rpmEntry = flyTab.add("RPM", 0.0).getEntry();
 
 
   private final WPI_TalonSRX leftFlywheel = new WPI_TalonSRX(Constants.ShooterPorts.LeftFlywheelPort);
@@ -34,8 +48,23 @@ public class Shooter extends SubsystemBase {
   private SimpleMotorFeedforward rightFlywheelFF = new   SimpleMotorFeedforward(Constants.rightFlywheelFF.kS, Constants.rightFlywheelFF.kV, Constants.rightFlywheelFF.kA);
 
 
+  private final LinearSystem<N1, N1, N1> flywheelPlant =
+  LinearSystemId.identifyVelocitySystem(Constants.FlywheelSimConstants.kV,  Constants.FlywheelSimConstants.kA);
+
+  private final TalonSRXSimCollection LeftFlyWheelSimMotor;
+  private final FlywheelSim LeftFlyWheelSim;
+
+  private static final double kFlywheelGearing = 1.0;
+
+  private double motorVoltSim = 0.0;
 
   public Shooter() {
+
+     // Assigns simulation and motor objects
+    LeftFlyWheelSim = new FlywheelSim(flywheelPlant, DCMotor.getBag(0), kFlywheelGearing);
+
+    LeftFlyWheelSimMotor = leftFlywheel.getSimCollection();
+
     leftFlywheel.configFactoryDefault();
     leftFlywheel.setInverted(true); leftFlywheel.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute);
     rightFlywheel.configFactoryDefault();
@@ -52,6 +81,8 @@ public class Shooter extends SubsystemBase {
   public void setFlywheelPower(double speed) {
     leftFlywheel.set(speed);
     rightFlywheel.set(speed);
+
+    motorVoltSim = speed *12.0;
   }
   
   public boolean flywheelWithinErrorMargin() {
@@ -92,6 +123,12 @@ public class Shooter extends SubsystemBase {
     rightFlywheel.setSelectedSensorPosition(0, 0, 10);
   }
  
+  private int velocityToNativeUnits(double velocityRPM) {
+    double motorRotationsPerSecond = velocityRPM / 60.0;
+    double motorRotationsPer100ms = motorRotationsPerSecond / 10.0;
+    int sensorCountsPer100ms = (int) (motorRotationsPer100ms * 4096.0);
+    return sensorCountsPer100ms;
+  }
 
   @Override
   public void periodic() {
@@ -103,12 +140,28 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putNumber("Right Flywheel RPM", getRightRPM());
     SmartDashboard.putNumber("Right Flywheel Power", getRightFlywheelPower());
 
+    nativeVel.setDouble(leftFlywheel.getSelectedSensorVelocity());
+    nativePos.setDouble(leftFlywheel.getSelectedSensorPosition());
+    rpmEntry.setDouble(LeftFlyWheelSim.getAngularVelocityRPM());
+
     if (RobotContainer.getJoy1().getRawButton(2) && overrideTimer.get() >= overrideTime) {
       override = !override;
       overrideTimer.reset();
       }
-      
-      
+  }
 
+  @Override
+  public void simulationPeriodic() {
+    // Set inputs of voltage
+    LeftFlyWheelSim.setInput(motorVoltSim);
+    // Update with dt of 0.02
+    LeftFlyWheelSim.update(0.02);
+
+    // Update Quadrature
+    // Only velocity can be set - position can't be set
+
+    LeftFlyWheelSimMotor.setQuadratureVelocity(
+        velocityToNativeUnits(
+            LeftFlyWheelSim.getAngularVelocityRPM()));
   }
 }
