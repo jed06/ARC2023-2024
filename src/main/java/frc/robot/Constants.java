@@ -26,8 +26,8 @@ public final class Constants {
 
     public static final int kDriverControllerPort = 0;
 
-    public static final int LeftDriveTalonPort = 2;
-    public static final int RightDriveTalonPort = 3;
+    public static final int LeftDriveTalonPort = 10;
+    public static final int RightDriveTalonPort = 10;
 
     public static final int LeftDriveVictorPort = 4;
     public static final int RightDriveVictorPort = 5;
@@ -37,8 +37,8 @@ public final class Constants {
     public static final int One = 1;
     
     
-    public static final int leftFlywheelPort = 30;
-    public static final int rightFlywheelPort = 31; 
+    public static final int leftFlywheelPort = 16;
+    public static final int rightFlywheelPort = 17; 
     
     public static final double EncoderTicksPerRevolution = 4096.0;
   }
@@ -60,7 +60,7 @@ public final class Constants {
 
   public static class ButtonMap {
 
-// Buttons can be assigned to functions here  
+// Buttons can be assigned to functions here
   }
   public static final class ShooterPorts {
     public static final int LeftFlywheelPort = 16;

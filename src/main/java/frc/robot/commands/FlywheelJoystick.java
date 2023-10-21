@@ -12,13 +12,13 @@ import edu.wpi.first.wpilibj.Joystick;
 public class FlywheelJoystick extends CommandBase {
   /** Creates a new FlywheelJoystick. */
 
-private final Shooter leftFlywheel;
+private final Shooter shooter;
 private final Joystick joy;
 
-  public FlywheelJoystick(Shooter leftFlywheel, Joystick joy) {
-    this.leftFlywheel = leftFlywheel;
+  public FlywheelJoystick(Shooter shooter, Joystick joy) {
+    this.shooter = shooter;
     this.joy = joy;
-    addRequirements(leftFlywheel);
+    addRequirements(shooter);
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
@@ -26,21 +26,21 @@ private final Joystick joy;
   @Override
   public void initialize() {
     
-    leftFlywheel.setFlywheelPower(0.0);
+    shooter.setFlywheelPower(0.0);
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
     
-    leftFlywheel.setFlywheelPower(joy.getRawAxis(5));
+    shooter.setFlywheelPower(-joy.getRawAxis(5));
+    shooter.setRollerPower(-joy.getRawAxis(1));
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    
-    leftFlywheel.setFlywheelPower(0.0);
+    shooter.setFlywheelPower(0.0);
   }
 
   // Returns true when the command should end.

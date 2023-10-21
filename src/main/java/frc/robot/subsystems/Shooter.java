@@ -23,6 +23,7 @@ import edu.wpi.first.networktables.GenericEntry;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.TalonSRXSimCollection;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 public class Shooter extends SubsystemBase {
   /** Creates a new Shooter. */
@@ -40,6 +41,7 @@ public class Shooter extends SubsystemBase {
 
   private final WPI_TalonSRX leftFlywheel = new WPI_TalonSRX(Constants.ShooterPorts.LeftFlywheelPort);
   private final WPI_TalonSRX rightFlywheel = new WPI_TalonSRX(Constants.ShooterPorts.RightFlywheelPort);
+  private final WPI_VictorSPX roller = new WPI_VictorSPX(Constants.ShooterPorts.rollerPort);
 
   private final PIDController leftFlywheelPID = new  PIDController(Constants.leftFlywheelPIDConsts.pidP, Constants.leftFlywheelPIDConsts.pidI, Constants.leftFlywheelPIDConsts.pidD);
   private final PIDController rightFlywheelPID = new  PIDController(Constants.rightFlywheelPIDConsts.pidP, Constants.rightFlywheelPIDConsts.pidI, Constants.rightFlywheelPIDConsts.pidD);
@@ -51,8 +53,8 @@ public class Shooter extends SubsystemBase {
   private final LinearSystem<N1, N1, N1> flywheelPlant =
   LinearSystemId.identifyVelocitySystem(Constants.FlywheelSimConstants.kV,  Constants.FlywheelSimConstants.kA);
 
-  private final TalonSRXSimCollection LeftFlyWheelSimMotor;
-  private final FlywheelSim LeftFlyWheelSim;
+  private final TalonSRXSimCollection RightFlywheelSimMotor;
+  private final FlywheelSim RightFlywheelSim;
 
   private static final double kFlywheelGearing = 1.0;
 
@@ -61,9 +63,9 @@ public class Shooter extends SubsystemBase {
   public Shooter() {
 
      // Assigns simulation and motor objects
-    LeftFlyWheelSim = new FlywheelSim(flywheelPlant, DCMotor.getBag(0), kFlywheelGearing);
+    RightFlywheelSim = new FlywheelSim(flywheelPlant, DCMotor.getBag(0), kFlywheelGearing);
 
-    LeftFlyWheelSimMotor = leftFlywheel.getSimCollection();
+    RightFlywheelSimMotor = rightFlywheel.getSimCollection();
 
     leftFlywheel.configFactoryDefault();
     leftFlywheel.setInverted(true); leftFlywheel.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute);
@@ -83,6 +85,10 @@ public class Shooter extends SubsystemBase {
     rightFlywheel.set(speed);
 
     motorVoltSim = speed *12.0;
+  }
+
+  public void setRollerPower(double speed) {
+    roller.set(speed);
   }
   
   public boolean flywheelWithinErrorMargin() {
@@ -140,9 +146,9 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putNumber("Right Flywheel RPM", getRightRPM());
     SmartDashboard.putNumber("Right Flywheel Power", getRightFlywheelPower());
 
-    nativeVel.setDouble(leftFlywheel.getSelectedSensorVelocity());
-    nativePos.setDouble(leftFlywheel.getSelectedSensorPosition());
-    rpmEntry.setDouble(LeftFlyWheelSim.getAngularVelocityRPM());
+    nativeVel.setDouble(rightFlywheel.getSelectedSensorVelocity());
+    nativePos.setDouble(rightFlywheel.getSelectedSensorPosition());
+    rpmEntry.setDouble(RightFlywheelSim.getAngularVelocityRPM());
 
     if (RobotContainer.getJoy1().getRawButton(2) && overrideTimer.get() >= overrideTime) {
       override = !override;
@@ -153,15 +159,15 @@ public class Shooter extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
     // Set inputs of voltage
-    LeftFlyWheelSim.setInput(motorVoltSim);
+    RightFlywheelSim.setInput(motorVoltSim);
     // Update with dt of 0.02
-    LeftFlyWheelSim.update(0.02);
+    RightFlywheelSim.update(0.02);
 
     // Update Quadrature
     // Only velocity can be set - position can't be set
 
-    LeftFlyWheelSimMotor.setQuadratureVelocity(
+    RightFlywheelSimMotor.setQuadratureVelocity(
         velocityToNativeUnits(
-            LeftFlyWheelSim.getAngularVelocityRPM()));
+            RightFlywheelSim.getAngularVelocityRPM()));
   }
 }
